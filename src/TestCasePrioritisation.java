@@ -2,10 +2,12 @@ import java.io.*;
 import java.util.*;
 
 class TestCasePrioritisation {
-    private final int populationSize = 150;
-    private final int subsetSize = 25;
-    private final int maxGen = 1000;
-    private final String fileName = "bigfaultmatrix.txt";
+    private final int POPULATION_SIZE = 150;
+    private final int SUBSET_SIZE = 25;
+    private final double MUTATION_RATE = 0.05;
+    private final double CROSSOVER_RATE = 0.95;
+    private final int MAX_GEN = 1000;
+    private final String FILE_NAME = "bigfaultmatrix.txt";
     private Map<String, int[]> testCases = new HashMap<>();
     private int generationCount = 0;
     private List<String[]> population;
@@ -24,7 +26,7 @@ class TestCasePrioritisation {
         String st;
         String[] tokens;
         ClassLoader classLoader = getClass().getClassLoader();
-        File f = new File(Objects.requireNonNull(classLoader.getResource(fileName)).getFile());
+        File f = new File(Objects.requireNonNull(classLoader.getResource(FILE_NAME)).getFile());
         try {
             BufferedReader br = new BufferedReader(new FileReader(f));
             while ((st = br.readLine()) != null) {
@@ -43,7 +45,7 @@ class TestCasePrioritisation {
 
     private void evolve() {
         generationCount++;
-        while (generationCount < maxGen) {
+        while (generationCount < MAX_GEN) {
             generationCount++;
             Map<String[], Double> rankedPop = new HashMap<>();
             population.forEach(s -> rankedPop.put(s, fitnessFunction(s)));
@@ -55,10 +57,10 @@ class TestCasePrioritisation {
     private List<String[]> generateStartPopulation() {
         List<String[]> population = new ArrayList<>();
         Random rg = new Random();
-        for (int i = 0; i < populationSize; i++) {
+        for (int i = 0; i < POPULATION_SIZE; i++) {
             List<String> possibleTests = new ArrayList<>(testCases.keySet());
-            String[] genome = new String[subsetSize];
-            for (int k = 0; k < subsetSize; k++) {
+            String[] genome = new String[SUBSET_SIZE];
+            for (int k = 0; k < SUBSET_SIZE; k++) {
                 String randomTest = possibleTests.get(rg.nextInt(possibleTests.size()));
                 genome[k] = randomTest;
                 possibleTests.remove(randomTest); // genome can't have same test multiple times
@@ -102,12 +104,12 @@ class TestCasePrioritisation {
         double x = 0.0;
         int faultsFound = faultFoundOrder.size();
         if (faultsFound < numberOfFaults) { // for every fault that is never found treat it as it was found in the last test + 1
-            x += (numberOfFaults - faultsFound) * subsetSize + 1;
+            x += (numberOfFaults - faultsFound) * (SUBSET_SIZE + 1);
         }
         for (Integer i : faultFoundOrder) {
             x += i; //(TF1+TF2+TF3 + ... TFn)
         }
-        return 1.0 - (x / (subsetSize * numberOfFaults)) + (1.0 / (2 * subsetSize));
+        return 1.0 - (x / (SUBSET_SIZE * numberOfFaults)) + (1.0 / (2 * SUBSET_SIZE));
     }
 
     private void checkBestSoFar(String[] candidate) {
@@ -123,44 +125,41 @@ class TestCasePrioritisation {
 
     private void generateNewPopulation() {
         population = new ArrayList<>();
-        for (int i = 0; i < populationSize / 2; i++) {
+        for (int i = 0; i < POPULATION_SIZE / 2; i++) {
             String[] parentA = matingPool.get(rg.nextInt(matingPool.size()));
             String[] parentB = matingPool.get(rg.nextInt(matingPool.size()));
-            List<String> possibleChildATests = new ArrayList<>(testCases.keySet());
-            List<String> possibleChildBTests = new ArrayList<>(testCases.keySet());
-            String[] childA = new String[subsetSize];
-            String[] childB = new String[subsetSize];
-            for (int k = 0; k < subsetSize; k++) { // TODO split it up in functions
-                if (rg.nextInt(subsetSize) == 1) { // approximately one test in genome will mutate
-                    childA[k] = possibleChildATests.get(rg.nextInt(possibleChildATests.size()));
-                    possibleChildATests.remove(childA[k]);
-                    childB[k] = possibleChildBTests.get(rg.nextInt(possibleChildBTests.size()));
-                    possibleChildBTests.remove(childB[k]);
-                } else {
-                    if (k < subsetSize / 2) { // Sets the first half of the genome
-                        childA[k] = parentA[k];
-                        possibleChildATests.remove(parentA[k]);
-                        childB[k] = parentB[k];
-                        possibleChildBTests.remove(parentB[k]);
-                    } else { // sets the second half of the genome
-                        String pa = parentA[k];
-                        String pb = parentB[k];
-                        if (!possibleChildATests.contains(pb)) { // Test case already in the genome
-                            pb = possibleChildATests.get(rg.nextInt(possibleChildATests.size())); // inserts random test case that haven't been used
-                        }
-                        if (!possibleChildBTests.contains(pa)) { // Test case already in the genome
-                            pa = possibleChildBTests.get(rg.nextInt(possibleChildBTests.size())); // inserts random test case that haven't been used
-                        }
-                        childA[k] = pb;
-                        childB[k] = pa;
-                    }
-                }
+            if(Math.random() < CROSSOVER_RATE) {
+                population.add(crossover(parentA, parentB));
+                population.add(crossover(parentB, parentA));
+            }else{
+                population.add(parentA);
+                population.add(parentB);
             }
-            checkBestSoFar(childA);
-            checkBestSoFar(childB);
-            population.add(childA);
-            population.add(childB);
         }
 
+    }
+
+    private String[] crossover(String[] p1, String[] p2) {
+        List<String> availableGenes = new ArrayList<>(testCases.keySet());
+        String[] child = new String[SUBSET_SIZE];
+        for (int k = 0; k < SUBSET_SIZE; k++) {
+            if (Math.random() < MUTATION_RATE) {
+                child[k] = availableGenes.get(rg.nextInt(availableGenes.size()));
+                availableGenes.remove(child[k]);
+            } else {
+                if (k < SUBSET_SIZE / 2) { // Sets the first half of the genome
+                    child[k] = p1[k];
+                    availableGenes.remove(p1[k]);
+                } else { // sets the second half of the genome
+                    String pb = p2[k];
+                    if (!availableGenes.contains(pb)) { // Test case already in the genome
+                        pb = availableGenes.get(rg.nextInt(availableGenes.size())); // inserts random gene that hasn't been used
+                    }
+                    child[k] = pb;
+                }
+            }
+        }
+        checkBestSoFar(child);
+        return child;
     }
 }
