@@ -2,8 +2,8 @@ import java.io.*;
 import java.util.*;
 
 class TestCasePrioritisation {
-    private final int populationSize = 100;
-    private final int subsetSize = 50;
+    private final int populationSize = 150;
+    private final int subsetSize = 25;
     private final int maxGen = 1000;
     private final String fileName = "bigfaultmatrix.txt";
     private Map<String, int[]> testCases = new HashMap<>();
@@ -72,8 +72,8 @@ class TestCasePrioritisation {
     private void generateMatingPool(Map<String[], Double> rankedPop) {
         matingPool = new ArrayList<>();
         rankedPop.forEach((dna, rank) -> {
-            for (int i = 0; i < (rank + 1) * 10; i++) {
-                if (rank > bestScore - 1) { // allow only best to enter the pool, also make sure that the best one has the best chance to mate
+            for (int i = 0; i < (rank + 1) * 100; i++) {
+                if (rank > bestScore - 0.03) { // allow only best to enter the pool, also make sure that the best one has the best chance to mate
                     matingPool.add(dna);
                 }
             }
@@ -115,9 +115,9 @@ class TestCasePrioritisation {
         if (bestScore < score) {
             bestScore = score;
             System.out.println("Generation: " + generationCount + " New best: " + score + Arrays.toString(candidate));
-            for (String s : candidate) {
-                System.out.println(Arrays.toString(testCases.get(s)));
-            }
+//            for (String s : candidate) {
+//                System.out.println(Arrays.toString(testCases.get(s)));
+//            }
         }
     }
 
@@ -131,7 +131,7 @@ class TestCasePrioritisation {
             String[] childA = new String[subsetSize];
             String[] childB = new String[subsetSize];
             for (int k = 0; k < subsetSize; k++) { // TODO split it up in functions
-                if (rg.nextInt(50) == 1) { // 1 in 50 chance of mutation
+                if (rg.nextInt(subsetSize) == 1) { // approximately one test in genome will mutate
                     childA[k] = possibleChildATests.get(rg.nextInt(possibleChildATests.size()));
                     possibleChildATests.remove(childA[k]);
                     childB[k] = possibleChildBTests.get(rg.nextInt(possibleChildBTests.size()));
