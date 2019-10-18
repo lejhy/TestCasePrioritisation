@@ -3,10 +3,10 @@ import java.util.*;
 
 class TestCasePrioritisation {
     private final int POPULATION_SIZE = 150;
-    private final int SUBSET_SIZE = 30;
-    private final double MUTATION_RATE = 0.05;
-    private final double CROSSOVER_RATE = 0.95;
-    private final int MAX_GEN = 1000;
+    private final int SUBSET_SIZE = 10;
+    private final double MUTATION_RATE = 0.1;
+    private final double CROSSOVER_RATE = 0.99;
+    private final int MAX_GEN = 10000;
     private final String FILE_NAME = "bigfaultmatrix.txt";
 
     private Map<String, int[]> testCases = new HashMap<>();
@@ -75,17 +75,16 @@ class TestCasePrioritisation {
     // creates matting pool where the fittest dna has the best chances of getting picked
     private void generateMatingPool(Map<String[], Double> rankedPop) {
         matingPool = new ArrayList<>();
-        rankedPop.forEach((dna, rank) -> {
-            for (int i = 0; i < (rank + 1) * 100; i++) {
-                if (rank > bestScore - 0.03) { // allow only best to enter the pool, also make sure that the best one has the best chance to mate
+        rankedPop.forEach((dna, rank) -> {// TODO make sure that fittest have advantage
+            if (rank > bestScore - 0.03) {// allow only best to enter the pool
+//                for (int i = 0; i < rank * 100; i++) {
                     matingPool.add(dna);
-                }
+//                }
             }
         });
     }
 
     private double fitnessFunction(String[] candidate) {
-//        System.out.println(Arrays.toString(candidate));
         int position = 1;
         Map<Integer, Integer> faultFound = new HashMap<>();
         for (String test : candidate) {
@@ -100,7 +99,7 @@ class TestCasePrioritisation {
         return calculateAPFD(faultFound.values()) + faultFound.size(); // APFD + faults found <- so genomes that find more tests would always be prioritised
     }
 
-    // 1 -  ((TF1+TF2+TF3+ ... +TFn) / (number of tests * number of faults))) + 1 / (2 * number of tests)
+    // 1 - ((TF1+TF2+TF3+ ... +TFn) / (number of tests * number of faults))) + 1 / (2 * number of tests)
     private double calculateAPFD(Collection<Integer> faultFoundOrder) {
         double x = 0.0;
         for (Integer i : faultFoundOrder) {
@@ -115,9 +114,9 @@ class TestCasePrioritisation {
             bestScore = score;
             bestIndividual = candidate;
             System.out.println("Generation: " + generationCount + " New best: " + score + Arrays.toString(candidate));
-//            for (String s : candidate) {
-//                System.out.println(Arrays.toString(testCases.get(s)));
-//            }
+            for (String s : candidate) {
+                System.out.println(Arrays.toString(testCases.get(s)));
+            }
         }
     }
 
