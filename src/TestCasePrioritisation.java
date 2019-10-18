@@ -3,17 +3,19 @@ import java.util.*;
 
 class TestCasePrioritisation {
     private final int POPULATION_SIZE = 150;
-    private final int SUBSET_SIZE = 25;
+    private final int SUBSET_SIZE = 30;
     private final double MUTATION_RATE = 0.05;
     private final double CROSSOVER_RATE = 0.95;
     private final int MAX_GEN = 1000;
     private final String FILE_NAME = "bigfaultmatrix.txt";
+
     private Map<String, int[]> testCases = new HashMap<>();
     private int generationCount = 0;
     private List<String[]> population;
     private List<String[]> matingPool;
     private Random rg = new Random();
     private double bestScore = 0;
+    private String[] bestIndividual;
     private int numberOfFaults = 0;
 
     TestCasePrioritisation() {
@@ -95,19 +97,14 @@ class TestCasePrioritisation {
             }
             position++;
         }
-        return calculateAPFD(faultFound.values());
+        return calculateAPFD(faultFound.values()) + faultFound.size(); // APFD + faults found <- so genomes that find more tests would always be prioritised
     }
 
-    // 1 -  ((TF1+TF2+TF3 + ... TFn) / (number of tests * number of faults))) + 1 / (2 * number of tests)
+    // 1 -  ((TF1+TF2+TF3+ ... +TFn) / (number of tests * number of faults))) + 1 / (2 * number of tests)
     private double calculateAPFD(Collection<Integer> faultFoundOrder) {
-//        System.out.println("Got here");
         double x = 0.0;
-        int faultsFound = faultFoundOrder.size();
-        if (faultsFound < numberOfFaults) { // for every fault that is never found treat it as it was found in the last test + 1
-            x += (numberOfFaults - faultsFound) * (SUBSET_SIZE + 1);
-        }
         for (Integer i : faultFoundOrder) {
-            x += i; //(TF1+TF2+TF3 + ... TFn)
+            x += i; //(TF1+TF2+TF3+ ... +TFn)
         }
         return 1.0 - (x / (SUBSET_SIZE * numberOfFaults)) + (1.0 / (2 * SUBSET_SIZE));
     }
@@ -116,6 +113,7 @@ class TestCasePrioritisation {
         double score = fitnessFunction(candidate);
         if (bestScore < score) {
             bestScore = score;
+            bestIndividual = candidate;
             System.out.println("Generation: " + generationCount + " New best: " + score + Arrays.toString(candidate));
 //            for (String s : candidate) {
 //                System.out.println(Arrays.toString(testCases.get(s)));
@@ -125,18 +123,22 @@ class TestCasePrioritisation {
 
     private void generateNewPopulation() {
         population = new ArrayList<>();
-        for (int i = 0; i < POPULATION_SIZE / 2; i++) {
+
+        while (population.size() < POPULATION_SIZE) {
             String[] parentA = matingPool.get(rg.nextInt(matingPool.size()));
             String[] parentB = matingPool.get(rg.nextInt(matingPool.size()));
-            if(Math.random() < CROSSOVER_RATE) {
+            if (Math.random() < CROSSOVER_RATE) {
                 population.add(crossover(parentA, parentB));
                 population.add(crossover(parentB, parentA));
-            }else{
+            } else {
                 population.add(parentA);
                 population.add(parentB);
             }
         }
-
+        if (bestIndividual != null) {
+            population.remove(0); // population size needs to remain the same;
+            population.add(bestIndividual); // best individual always survives
+        }
     }
 
     private String[] crossover(String[] p1, String[] p2) {
