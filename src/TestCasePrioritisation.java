@@ -3,13 +3,13 @@ import java.util.*;
 
 class TestCasePrioritisation {
     private final int populationSize = 100;
-    private final int subsetSize = 10;
-    private final int maxGen = 10000;
-    private final String fileName = "smallfaultmatrix.txt";
+    private final int subsetSize = 50;
+    private final int maxGen = 1000;
+    private final String fileName = "bigfaultmatrix.txt";
     private Map<String, int[]> testCases = new HashMap<>();
     private int generationCount = 0;
-    private ArrayList<String[]> population;
-    private ArrayList<String[]> matingPool;
+    private List<String[]> population;
+    private List<String[]> matingPool;
     private Random rg = new Random();
     private double bestScore = 0;
     private int numberOfFaults = 0;
@@ -52,11 +52,11 @@ class TestCasePrioritisation {
         }
     }
 
-    private ArrayList<String[]> generateStartPopulation() {
-        ArrayList<String[]> population = new ArrayList<>();
+    private List<String[]> generateStartPopulation() {
+        List<String[]> population = new ArrayList<>();
         Random rg = new Random();
         for (int i = 0; i < populationSize; i++) {
-            ArrayList<String> possibleTests = new ArrayList<>(testCases.keySet());
+            List<String> possibleTests = new ArrayList<>(testCases.keySet());
             String[] genome = new String[subsetSize];
             for (int k = 0; k < subsetSize; k++) {
                 String randomTest = possibleTests.get(rg.nextInt(possibleTests.size()));
@@ -81,6 +81,7 @@ class TestCasePrioritisation {
     }
 
     private double fitnessFunction(String[] candidate) {
+//        System.out.println(Arrays.toString(candidate));
         int position = 1;
         Map<Integer, Integer> faultFound = new HashMap<>();
         for (String test : candidate) {
@@ -92,14 +93,17 @@ class TestCasePrioritisation {
             }
             position++;
         }
-        if (faultFound.size() < numberOfFaults) return 0; // Didnt find all the faults
-
         return calculateAPFD(faultFound.values());
     }
 
     // 1 -  ((TF1+TF2+TF3 + ... TFn) / (number of tests * number of faults))) + 1 / (2 * number of tests)
     private double calculateAPFD(Collection<Integer> faultFoundOrder) {
+//        System.out.println("Got here");
         double x = 0.0;
+        int faultsFound = faultFoundOrder.size();
+        if (faultsFound < numberOfFaults) { // for every fault that is never found treat it as it was found in the last test + 1
+            x += (numberOfFaults - faultsFound) * subsetSize + 1;
+        }
         for (Integer i : faultFoundOrder) {
             x += i; //(TF1+TF2+TF3 + ... TFn)
         }
