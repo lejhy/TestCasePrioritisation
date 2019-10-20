@@ -9,7 +9,7 @@ class TestCasePrioritisation {
     private final int MAX_GEN = 10000;
     private final String FILE_NAME = "bigfaultmatrix.txt";
 
-    private Map<String, int[]> testCases = new HashMap<>();
+    private Map<String, int[]> testCases;
     private int generationCount = 0;
     private List<String[]> population;
     private List<String[]> matingPool;
@@ -19,14 +19,15 @@ class TestCasePrioritisation {
     private int numberOfFaults = 0;
 
     TestCasePrioritisation() {
-        loadFaultMatrix();
+        testCases = loadFaultMatrix();
         population = generateStartPopulation();
         evolve();
     }
 
-    private void loadFaultMatrix() {
+    private Map<String, int[]> loadFaultMatrix() {
         String st;
         String[] tokens;
+        Map<String, int[]> tests = new HashMap<>();
         ClassLoader classLoader = getClass().getClassLoader();
         File f = new File(Objects.requireNonNull(classLoader.getResource(FILE_NAME)).getFile());
         try {
@@ -38,18 +39,19 @@ class TestCasePrioritisation {
                 for (int i = 0; i < numberOfFaults; i++) {
                     faults[i] = Integer.parseInt(tokens[i + 1]);
                 }
-                testCases.put(tokens[0], faults);
+                tests.put(tokens[0], faults);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return tests;
     }
 
     private void evolve() {
-        generationCount++;
+        Map<String[], Double> rankedPop = new HashMap<>();
         while (generationCount < MAX_GEN) {
             generationCount++;
-            Map<String[], Double> rankedPop = new HashMap<>();
+            rankedPop.clear();
             population.forEach(s -> rankedPop.put(s, fitnessFunction(s)));
             generateMatingPool(rankedPop);
             generateNewPopulation();
@@ -58,14 +60,13 @@ class TestCasePrioritisation {
 
     private List<String[]> generateStartPopulation() {
         List<String[]> population = new ArrayList<>();
-        Random rg = new Random();
         for (int i = 0; i < POPULATION_SIZE; i++) {
             List<String> possibleTests = new ArrayList<>(testCases.keySet());
             String[] genome = new String[SUBSET_SIZE];
             for (int k = 0; k < SUBSET_SIZE; k++) {
                 String randomTest = possibleTests.get(rg.nextInt(possibleTests.size()));
                 genome[k] = randomTest;
-                possibleTests.remove(randomTest); // genome can't have same test multiple times
+                possibleTests.remove(randomTest); // genome can't have the same test multiple times
             }
             population.add(genome);
         }
@@ -78,7 +79,7 @@ class TestCasePrioritisation {
         rankedPop.forEach((dna, rank) -> {// TODO make sure that fittest have advantage
             if (rank > bestScore - 0.03) {// allow only best to enter the pool
 //                for (int i = 0; i < rank * 100; i++) {
-                    matingPool.add(dna);
+                matingPool.add(dna);
 //                }
             }
         });
@@ -102,10 +103,10 @@ class TestCasePrioritisation {
     // 1 - ((TF1+TF2+TF3+ ... +TFn) / (number of tests * number of faults))) + 1 / (2 * number of tests)
     private double calculateAPFD(Collection<Integer> faultFoundOrder) {
         double x = 0.0;
-        for (Integer i : faultFoundOrder) {
-            x += i; //(TF1+TF2+TF3+ ... +TFn)
+        for (Integer i : faultFoundOrder) { // TF1+TF2+TF3+ ... +TFn
+            x += i;
         }
-        return 1.0 - (x / (SUBSET_SIZE * numberOfFaults)) + (1.0 / (2 * SUBSET_SIZE));
+        return 1.0 - (x / (SUBSET_SIZE * numberOfFaults)) + (1.0 / (2 * SUBSET_SIZE)); // some of these values could be pre-calculated constants. This would speed up a little bit the calculation but decrease readability
     }
 
     private void checkBestSoFar(String[] candidate) {
@@ -122,11 +123,10 @@ class TestCasePrioritisation {
 
     private void generateNewPopulation() {
         population = new ArrayList<>();
-
         while (population.size() < POPULATION_SIZE) {
             String[] parentA = matingPool.get(rg.nextInt(matingPool.size()));
             String[] parentB = matingPool.get(rg.nextInt(matingPool.size()));
-            if (Math.random() < CROSSOVER_RATE) {
+            if (Math.random() < CROSSOVER_RATE) { // There is a chance that the parent will enter the next population without crossover or mutation
                 population.add(crossover(parentA, parentB));
                 population.add(crossover(parentB, parentA));
             } else {
@@ -135,8 +135,7 @@ class TestCasePrioritisation {
             }
         }
         if (bestIndividual != null) {
-            population.remove(0); // population size needs to remain the same;
-            population.add(bestIndividual); // best individual always survives
+            population.add(0, bestIndividual); // best individual always survives
         }
     }
 
@@ -148,7 +147,7 @@ class TestCasePrioritisation {
                 child[k] = availableGenes.get(rg.nextInt(availableGenes.size()));
                 availableGenes.remove(child[k]);
             } else {
-                if (k < SUBSET_SIZE / 2) { // Sets the first half of the genome
+                if (k < SUBSET_SIZE / 2) { // sets the first half of the genome
                     child[k] = p1[k];
                     availableGenes.remove(p1[k]);
                 } else { // sets the second half of the genome
