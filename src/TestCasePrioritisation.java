@@ -1,10 +1,13 @@
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.*;
 
 class TestCasePrioritisation {
-    private final int POPULATION_SIZE = 150;
+    private final int POPULATION_SIZE = 1000;
     private final int SUBSET_SIZE = 10;
-    private final double MUTATION_RATE = 0.1;
+    private final double MUTATION_RATE = 0.15;
     private final double CROSSOVER_RATE = 0.99;
     private final int MAX_GEN = 10000;
     private final String FILE_NAME = "bigfaultmatrix.txt";
@@ -53,8 +56,8 @@ class TestCasePrioritisation {
             generationCount++;
             rankedPop.clear();
             population.forEach(s -> rankedPop.put(s, fitnessFunction(s)));
-            generateMatingPool(rankedPop);
-            generateNewPopulation();
+            matingPool = getMatingPool(rankedPop);
+            population = generateNewPopulation();
         }
     }
 
@@ -73,16 +76,17 @@ class TestCasePrioritisation {
         return population;
     }
 
-    // creates matting pool where the fittest dna has the best chances of getting picked
-    private void generateMatingPool(Map<String[], Double> rankedPop) {
-        matingPool = new ArrayList<>();
-        rankedPop.forEach((dna, rank) -> {// TODO make sure that fittest have advantage
-            if (rank > bestScore - 0.03) {// allow only best to enter the pool
-//                for (int i = 0; i < rank * 100; i++) {
-                matingPool.add(dna);
-//                }
-            }
-        });
+    // keeps 10 fittest individuals
+    private List<String[]> getMatingPool(Map<String[], Double> rankedPop) {
+        List<String[]> matingPool = new LinkedList<>();
+        rankedPop.entrySet().stream()
+                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                .limit(10)
+                .forEach(v -> matingPool.add(v.getKey()));
+//        matingPool.forEach(c -> System.out.println(Arrays.toString(c)));
+//        System.out.println("-----------------------" + bestScore);
+//        System.out.println("-----------------------");
+        return matingPool;
     }
 
     private double fitnessFunction(String[] candidate) {
@@ -121,22 +125,20 @@ class TestCasePrioritisation {
         }
     }
 
-    private void generateNewPopulation() {
-        population = new ArrayList<>();
-        while (population.size() < POPULATION_SIZE) {
+    private List<String[]> generateNewPopulation() {
+        List<String[]> newPopulation = new ArrayList<>();
+        while (newPopulation.size() < POPULATION_SIZE) {
             String[] parentA = matingPool.get(rg.nextInt(matingPool.size()));
             String[] parentB = matingPool.get(rg.nextInt(matingPool.size()));
             if (Math.random() < CROSSOVER_RATE) { // There is a chance that the parent will enter the next population without crossover or mutation
-                population.add(crossover(parentA, parentB));
-                population.add(crossover(parentB, parentA));
+                newPopulation.add(crossover(parentA, parentB));
+                newPopulation.add(crossover(parentB, parentA));
             } else {
-                population.add(parentA);
-                population.add(parentB);
+                newPopulation.add(parentA);
+                newPopulation.add(parentB);
             }
         }
-        if (bestIndividual != null) {
-            population.add(0, bestIndividual); // best individual always survives
-        }
+        return newPopulation;
     }
 
     private String[] crossover(String[] p1, String[] p2) {
