@@ -1,28 +1,27 @@
 import java.util.*;
 
-class TestCasePrioritisation implements Solver{
-    private final int POPULATION_SIZE = 1000;
+class TestCasePrioritisation implements Solver {
+    private final int POPULATION_SIZE = 500;
     private final int SUBSET_SIZE = 10;
     private final double MUTATION_RATE = 0.15;
     private final double CROSSOVER_RATE = 0.99;
-    private final int MAX_GEN = 5000;
+    private final int MAX_GEN = 500;
 
-    private Map<String, int[]> testCases;
+    private Map<String, boolean[]> testCases;
     private int generationCount = 0;
     private Set<String[]> population;
     private Random rg = new Random();
     private double bestScore = 0;
-    private String[] bestIndividual;
+    private String[] bestCandidate;
 
     TestCasePrioritisation(String dataSet) {
         FaultMatrix fm = new FaultMatrix();
         testCases = fm.loadFaultMatrix(dataSet);
         population = generateStartPopulation();
-        evolve();
     }
 
 
-    private void evolve() {
+    public void solve() {
         Map<String[], Double> rankedPop = new HashMap<>();
         while (generationCount < MAX_GEN) {
             generationCount++;
@@ -47,12 +46,12 @@ class TestCasePrioritisation implements Solver{
 
         rankedPop.entrySet().stream()
                 .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
-                .limit(POPULATION_SIZE/20)
+                .limit(POPULATION_SIZE / 20)
                 .forEach(v -> {
                     matingPool.add(v.getKey());
                 });
-        if (bestIndividual != null) {
-            matingPool.add(0, bestIndividual); // best individual always mates
+        if (bestCandidate != null) {
+            matingPool.add(0, bestCandidate); // best individual always mates
         }
         return matingPool;
     }
@@ -62,10 +61,14 @@ class TestCasePrioritisation implements Solver{
         double score = TestCaseOrderEvaluator.fitnessFunction(testCases, candidate);
         if (bestScore < score) {
             bestScore = score;
-            bestIndividual = candidate;
+            bestCandidate = candidate;
             System.out.println("Generation: " + generationCount + " New best: " + score + Arrays.toString(candidate));
-            for (String s : candidate) {
-                System.out.println(Arrays.toString(testCases.get(s)));
+            for (String s : bestCandidate) {
+                for (boolean b : testCases.get(s)) {
+                    if (b) System.out.print("1 ");
+                    else System.out.print("0 ");
+                }
+                System.out.println();
             }
         }
     }
@@ -110,8 +113,4 @@ class TestCasePrioritisation implements Solver{
         return child;
     }
 
-    @Override
-    public void solve() {
-        evolve();
-    }
 }

@@ -1,19 +1,21 @@
-import java.util.Arrays;
 import java.util.Map;
 
-public class RandomTestCasePrioritisation {
+public class RandomTestCasePrioritisation implements Solver {
     private final int SUBSET_SIZE = 10;
     private double bestScore = 0;
     private String[] bestCandidate;
+    Map<String, boolean[]> testCases;
 
-
-    RandomTestCasePrioritisation() {
+    RandomTestCasePrioritisation(String dataSet) {
         FaultMatrix fm = new FaultMatrix();
-        Map<String, int[]> testCases = fm.loadFaultMatrix("bigfaultmatrix.txt");
+        testCases = fm.loadFaultMatrix(dataSet);
+    }
+
+    public void solve() {
         tryRandomSolutions(testCases);
     }
 
-    private void tryRandomSolutions(Map<String, int[]> testCases) {
+    private void tryRandomSolutions(Map<String, boolean[]> testCases) {
         String[] candidate;
         double score;
         for (int i = 0; i < 500000; i++) {
@@ -24,7 +26,11 @@ public class RandomTestCasePrioritisation {
                 bestCandidate = candidate;
                 System.out.println("Best found " + bestScore);
                 for (String s : bestCandidate) {
-                    System.out.println(Arrays.toString(testCases.get(s)));
+                    for (boolean b : testCases.get(s)) {
+                        if (b) System.out.print("1 ");
+                        else System.out.print("0 ");
+                    }
+                    System.out.println();
                 }
             }
         }
