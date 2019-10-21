@@ -1,6 +1,4 @@
 
-import MOEA.TestCaseProblem;
-
 import java.util.Scanner;
 
 public class Main {
@@ -17,11 +15,11 @@ public class Main {
             switch (selection) {
                 case 1:
                     dataSet = "smallfaultmatrix.txt";
-                    numberOfFaults = 38;
+                    numberOfFaults = 9;
                     break;
                 case 2:
                     dataSet = "bigfaultmatrix.txt";
-                    numberOfFaults = 9;
+                    numberOfFaults = 38;
                     break;
                 default:
                     return;

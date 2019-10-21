@@ -6,7 +6,6 @@ class TestCasePrioritisation implements Solver{
     private final double MUTATION_RATE = 0.15;
     private final double CROSSOVER_RATE = 0.99;
     private final int MAX_GEN = 5000;
-    private final String FILE_NAME;
 
     private Map<String, int[]> testCases;
     private int generationCount = 0;
@@ -18,7 +17,6 @@ class TestCasePrioritisation implements Solver{
     TestCasePrioritisation(String dataSet) {
         FaultMatrix fm = new FaultMatrix();
         testCases = fm.loadFaultMatrix(dataSet);
-        testCases = loadFaultMatrix();
         population = generateStartPopulation();
         evolve();
     }

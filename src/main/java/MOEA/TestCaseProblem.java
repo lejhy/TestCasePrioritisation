@@ -17,11 +17,6 @@ public class TestCaseProblem extends AbstractProblem {
     private final int NUMBER_OF_FAULTS;
     private List<boolean[]> tests = new ArrayList<>();
 
-    public static void main(String[] args) {
-
-
-    }
-
     public TestCaseProblem(String dataSet, int numberOfFaults) {
         super(numberOfFaults, 1, 1);
         NUMBER_OF_FAULTS = numberOfFaults;
