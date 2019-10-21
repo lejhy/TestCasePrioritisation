@@ -1,11 +1,12 @@
 import java.util.*;
 
-class TestCasePrioritisation {
+class TestCasePrioritisation implements Solver{
     private final int POPULATION_SIZE = 1000;
     private final int SUBSET_SIZE = 10;
     private final double MUTATION_RATE = 0.15;
     private final double CROSSOVER_RATE = 0.99;
     private final int MAX_GEN = 5000;
+    private final String FILE_NAME;
 
     private Map<String, int[]> testCases;
     private int generationCount = 0;
@@ -14,10 +15,10 @@ class TestCasePrioritisation {
     private double bestScore = 0;
     private String[] bestIndividual;
 
-    TestCasePrioritisation() {
+    TestCasePrioritisation(String dataSet) {
         FaultMatrix fm = new FaultMatrix();
-        testCases = fm.loadFaultMatrix("bigfaultmatrix.txt");
-        int numberOfFaults = testCases.values().iterator().next().length;
+        testCases = fm.loadFaultMatrix(dataSet);
+        testCases = loadFaultMatrix();
         population = generateStartPopulation();
         evolve();
     }
@@ -109,5 +110,10 @@ class TestCasePrioritisation {
         }
         checkBestSoFar(child);
         return child;
+    }
+
+    @Override
+    public void solve() {
+        evolve();
     }
 }
