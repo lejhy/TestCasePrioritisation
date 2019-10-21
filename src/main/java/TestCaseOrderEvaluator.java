@@ -2,9 +2,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
- class TestCaseOrderEvaluator {
+class TestCaseOrderEvaluator {
 
-     static double fitnessFunction(Map<String, boolean[]> testCases, String[] candidate) {
+    static double fitnessFunction(Map<String, boolean[]> testCases, String[] candidate) {
         int numberOfFaults = testCases.values().iterator().next().length;
         int position = 1;
         Map<Integer, Integer> faultFound = new HashMap<>();
@@ -17,12 +17,12 @@ import java.util.Map;
             }
             position++;
         }
-        return calculateAPFD(faultFound.values(), numberOfFaults, candidate.length) + faultFound.size(); // APFD + faults found <- so genomes that find more tests would always be prioritised
+        return calculateAPFD(faultFound.values(), numberOfFaults, candidate.length, numberOfFaults - faultFound.size());
     }
 
     // 1 - ((TF1+TF2+TF3+ ... +TFn) / (number of tests * number of faults))) + 1 / (2 * number of tests)
-    private static double calculateAPFD(Collection<Integer> faultFoundOrder, int numberOfFaults, int subsetSize) {
-        double x = 0.0;
+    private static double calculateAPFD(Collection<Integer> faultFoundOrder, int numberOfFaults, int subsetSize, int faultsNotFound) {
+        double x = faultsNotFound * (subsetSize + 1); // if fault is not found it treats as it was found in the last test + 1
         for (Integer i : faultFoundOrder) { // TF1+TF2+TF3+ ... +TFn
             x += i;
         }

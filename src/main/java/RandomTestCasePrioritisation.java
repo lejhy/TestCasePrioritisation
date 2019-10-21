@@ -1,4 +1,3 @@
-import java.util.Arrays;
 import java.util.Map;
 
 public class RandomTestCasePrioritisation implements Solver {
@@ -27,7 +26,11 @@ public class RandomTestCasePrioritisation implements Solver {
                 bestCandidate = candidate;
                 System.out.println("Best found " + bestScore);
                 for (String s : bestCandidate) {
-                    System.out.println(Arrays.toString(testCases.get(s)));
+                    for (boolean b : testCases.get(s)) {
+                        if (b) System.out.print("1 ");
+                        else System.out.print("0 ");
+                    }
+                    System.out.println();
                 }
             }
         }
