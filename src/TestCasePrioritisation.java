@@ -1,7 +1,3 @@
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.*;
 
 class TestCasePrioritisation {
@@ -9,112 +5,62 @@ class TestCasePrioritisation {
     private final int SUBSET_SIZE = 10;
     private final double MUTATION_RATE = 0.15;
     private final double CROSSOVER_RATE = 0.99;
-    private final int MAX_GEN = 10000;
-    private final String FILE_NAME = "bigfaultmatrix.txt";
+    private final int MAX_GEN = 5000;
 
     private Map<String, int[]> testCases;
     private int generationCount = 0;
-    private List<String[]> population;
-    private List<String[]> matingPool;
+    private Set<String[]> population;
     private Random rg = new Random();
     private double bestScore = 0;
     private String[] bestIndividual;
-    private int numberOfFaults = 0;
 
     TestCasePrioritisation() {
-        testCases = loadFaultMatrix();
+        FaultMatrix fm = new FaultMatrix();
+        testCases = fm.loadFaultMatrix("bigfaultmatrix.txt");
+        int numberOfFaults = testCases.values().iterator().next().length;
         population = generateStartPopulation();
         evolve();
     }
 
-    private Map<String, int[]> loadFaultMatrix() {
-        String st;
-        String[] tokens;
-        Map<String, int[]> tests = new HashMap<>();
-        ClassLoader classLoader = getClass().getClassLoader();
-        File f = new File(Objects.requireNonNull(classLoader.getResource(FILE_NAME)).getFile());
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(f));
-            while ((st = br.readLine()) != null) {
-                tokens = st.split(",");
-                numberOfFaults = tokens.length - 1;
-                int[] faults = new int[numberOfFaults];
-                for (int i = 0; i < numberOfFaults; i++) {
-                    faults[i] = Integer.parseInt(tokens[i + 1]);
-                }
-                tests.put(tokens[0], faults);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return tests;
-    }
 
     private void evolve() {
         Map<String[], Double> rankedPop = new HashMap<>();
         while (generationCount < MAX_GEN) {
             generationCount++;
             rankedPop.clear();
-            population.forEach(s -> rankedPop.put(s, fitnessFunction(s)));
-            matingPool = getMatingPool(rankedPop);
-            population = generateNewPopulation();
+            population.forEach(s -> rankedPop.put(s, TestCaseOrderEvaluator.fitnessFunction(testCases, s)));
+            List<String[]> matingPool = getMatingPool(rankedPop);
+            population = generateNewPopulation(matingPool);
         }
     }
 
-    private List<String[]> generateStartPopulation() {
-        List<String[]> population = new ArrayList<>();
-        for (int i = 0; i < POPULATION_SIZE; i++) {
-            List<String> possibleTests = new ArrayList<>(testCases.keySet());
-            String[] genome = new String[SUBSET_SIZE];
-            for (int k = 0; k < SUBSET_SIZE; k++) {
-                String randomTest = possibleTests.get(rg.nextInt(possibleTests.size()));
-                genome[k] = randomTest;
-                possibleTests.remove(randomTest); // genome can't have the same test multiple times
-            }
-            population.add(genome);
+    private Set<String[]> generateStartPopulation() {
+        Set<String[]> population = new HashSet<>();
+        for (int i = 0; population.size() < POPULATION_SIZE; i++) {
+            population.add(RandomCandidateGenerator.getRandomCandidate(testCases.keySet(), SUBSET_SIZE));
         }
         return population;
     }
 
-    // keeps 10 fittest individuals
+    // keeps 5% fittest individuals
     private List<String[]> getMatingPool(Map<String[], Double> rankedPop) {
         List<String[]> matingPool = new LinkedList<>();
+
         rankedPop.entrySet().stream()
                 .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
-                .limit(10)
-                .forEach(v -> matingPool.add(v.getKey()));
-//        matingPool.forEach(c -> System.out.println(Arrays.toString(c)));
-//        System.out.println("-----------------------" + bestScore);
-//        System.out.println("-----------------------");
+                .limit(POPULATION_SIZE/20)
+                .forEach(v -> {
+                    matingPool.add(v.getKey());
+                });
+        if (bestIndividual != null) {
+            matingPool.add(0, bestIndividual); // best individual always mates
+        }
         return matingPool;
     }
 
-    private double fitnessFunction(String[] candidate) {
-        int position = 1;
-        Map<Integer, Integer> faultFound = new HashMap<>();
-        for (String test : candidate) {
-            int[] faults = testCases.get(test);
-            for (int i = 0; i < numberOfFaults; i++) { // For each fault tracks in which position it was found e.g. fault "1" fas found after "4" tests
-                if (!faultFound.containsKey(i) && faults[i] == 1) {
-                    faultFound.put(i, position);
-                }
-            }
-            position++;
-        }
-        return calculateAPFD(faultFound.values()) + faultFound.size(); // APFD + faults found <- so genomes that find more tests would always be prioritised
-    }
-
-    // 1 - ((TF1+TF2+TF3+ ... +TFn) / (number of tests * number of faults))) + 1 / (2 * number of tests)
-    private double calculateAPFD(Collection<Integer> faultFoundOrder) {
-        double x = 0.0;
-        for (Integer i : faultFoundOrder) { // TF1+TF2+TF3+ ... +TFn
-            x += i;
-        }
-        return 1.0 - (x / (SUBSET_SIZE * numberOfFaults)) + (1.0 / (2 * SUBSET_SIZE)); // some of these values could be pre-calculated constants. This would speed up a little bit the calculation but decrease readability
-    }
 
     private void checkBestSoFar(String[] candidate) {
-        double score = fitnessFunction(candidate);
+        double score = TestCaseOrderEvaluator.fitnessFunction(testCases, candidate);
         if (bestScore < score) {
             bestScore = score;
             bestIndividual = candidate;
@@ -125,8 +71,8 @@ class TestCasePrioritisation {
         }
     }
 
-    private List<String[]> generateNewPopulation() {
-        List<String[]> newPopulation = new ArrayList<>();
+    private Set<String[]> generateNewPopulation(List<String[]> matingPool) {
+        Set<String[]> newPopulation = new HashSet<>();
         while (newPopulation.size() < POPULATION_SIZE) {
             String[] parentA = matingPool.get(rg.nextInt(matingPool.size()));
             String[] parentB = matingPool.get(rg.nextInt(matingPool.size()));
