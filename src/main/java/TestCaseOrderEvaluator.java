@@ -4,14 +4,14 @@ import java.util.Map;
 
  class TestCaseOrderEvaluator {
 
-     static double fitnessFunction(Map<String, int[]> testCases, String[] candidate) {
+     static double fitnessFunction(Map<String, boolean[]> testCases, String[] candidate) {
         int numberOfFaults = testCases.values().iterator().next().length;
         int position = 1;
         Map<Integer, Integer> faultFound = new HashMap<>();
         for (String test : candidate) {
-            int[] faults = testCases.get(test);
+            boolean[] faults = testCases.get(test);
             for (int i = 0; i < numberOfFaults; i++) { // For each fault tracks in which position it was found e.g. fault "1" fas found after "4" tests
-                if (!faultFound.containsKey(i) && faults[i] == 1) {
+                if (!faultFound.containsKey(i) && faults[i]) {
                     faultFound.put(i, position);
                 }
             }

@@ -1,13 +1,13 @@
 import java.util.*;
 
-class TestCasePrioritisation implements Solver{
+class TestCasePrioritisation implements Solver {
     private final int POPULATION_SIZE = 1000;
     private final int SUBSET_SIZE = 10;
     private final double MUTATION_RATE = 0.15;
     private final double CROSSOVER_RATE = 0.99;
     private final int MAX_GEN = 5000;
 
-    private Map<String, int[]> testCases;
+    private Map<String, boolean[]> testCases;
     private int generationCount = 0;
     private Set<String[]> population;
     private Random rg = new Random();
@@ -18,11 +18,10 @@ class TestCasePrioritisation implements Solver{
         FaultMatrix fm = new FaultMatrix();
         testCases = fm.loadFaultMatrix(dataSet);
         population = generateStartPopulation();
-        evolve();
     }
 
 
-    private void evolve() {
+    public void solve() {
         Map<String[], Double> rankedPop = new HashMap<>();
         while (generationCount < MAX_GEN) {
             generationCount++;
@@ -47,7 +46,7 @@ class TestCasePrioritisation implements Solver{
 
         rankedPop.entrySet().stream()
                 .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
-                .limit(POPULATION_SIZE/20)
+                .limit(POPULATION_SIZE / 20)
                 .forEach(v -> {
                     matingPool.add(v.getKey());
                 });
@@ -110,8 +109,4 @@ class TestCasePrioritisation implements Solver{
         return child;
     }
 
-    @Override
-    public void solve() {
-        evolve();
-    }
 }

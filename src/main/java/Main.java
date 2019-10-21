@@ -28,7 +28,8 @@ public class Main {
             System.out.println("(0) Exit");
             System.out.println("(1) Genetic Algorithm");
             System.out.println("(2) Hill Climber");
-            System.out.println("(3) MOEA Framework NSGA-II");
+            System.out.println("(3) Random");
+            System.out.println("(4) MOEA Framework NSGA-II");
             System.out.println("Select solver:");
             selection = scanner.nextInt();
             Solver solver;
@@ -40,6 +41,9 @@ public class Main {
 //
 //                    break;
                 case 3:
+                    solver = new RandomTestCasePrioritisation(dataSet);
+                    break;
+                case 4:
                     solver = new MOEASolver(dataSet, numberOfFaults, "NSGAII");
                     break;
                 default:
