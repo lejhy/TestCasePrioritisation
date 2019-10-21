@@ -38,13 +38,13 @@ public class Main {
             Solver solver;
             switch (selection) {
                 case 1:
-                    solver = new TestCasePrioritisation(dataSet);
+                    solver = new TestCasePrioritisation(dataSet, numberOfTests);
                     break;
                 case 2:
                     solver = new HillClimberTestCasePrioritisation(dataSet, numberOfTests);
                     break;
                 case 3:
-                    solver = new RandomTestCasePrioritisation(dataSet);
+                    solver = new RandomTestCasePrioritisation(dataSet, numberOfTests);
                     break;
                 case 4:
                     solver = new MOEASolver(dataSet, numberOfFaults, numberOfTests, "NSGAII");

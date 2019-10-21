@@ -1,12 +1,13 @@
 import java.util.Map;
 
 public class RandomTestCasePrioritisation implements Solver {
-    private final int SUBSET_SIZE = 10;
+    private final int SUBSET_SIZE;
     private double bestScore = 0;
     private String[] bestCandidate;
     Map<String, boolean[]> testCases;
 
-    RandomTestCasePrioritisation(String dataSet) {
+    RandomTestCasePrioritisation(String dataSet, int numberOfTests) {
+        SUBSET_SIZE = numberOfTests;
         FaultMatrix fm = new FaultMatrix();
         testCases = fm.loadFaultMatrix(dataSet);
     }

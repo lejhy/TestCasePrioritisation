@@ -2,7 +2,7 @@ import java.util.*;
 
 class TestCasePrioritisation implements Solver {
     private final int POPULATION_SIZE = 500;
-    private final int SUBSET_SIZE = 10;
+    private final int SUBSET_SIZE;
     private final double MUTATION_RATE = 0.15;
     private final double CROSSOVER_RATE = 0.99;
     private final int MAX_GEN = 500;
@@ -14,7 +14,8 @@ class TestCasePrioritisation implements Solver {
     private double bestScore = 0;
     private String[] bestCandidate;
 
-    TestCasePrioritisation(String dataSet) {
+    TestCasePrioritisation(String dataSet, int numberOfTests) {
+        SUBSET_SIZE = numberOfTests;
         FaultMatrix fm = new FaultMatrix();
         testCases = fm.loadFaultMatrix(dataSet);
         population = generateStartPopulation();
