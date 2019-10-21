@@ -40,9 +40,9 @@ public class Main {
                 case 1:
                     solver = new TestCasePrioritisation(dataSet);
                     break;
-//                case 2:
-//
-//                    break;
+                case 2:
+                    solver = new HillClimberTestCasePrioritisation(dataSet, numberOfTests);
+                    break;
                 case 3:
                     solver = new RandomTestCasePrioritisation(dataSet);
                     break;
