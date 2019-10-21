@@ -4,13 +4,13 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 
-class TestCasePrioritisation {
+class TestCasePrioritisation implements Solver{
     private final int POPULATION_SIZE = 1000;
     private final int SUBSET_SIZE = 10;
     private final double MUTATION_RATE = 0.15;
     private final double CROSSOVER_RATE = 0.99;
     private final int MAX_GEN = 10000;
-    private final String FILE_NAME = "bigfaultmatrix.txt";
+    private final String FILE_NAME;
 
     private Map<String, int[]> testCases;
     private int generationCount = 0;
@@ -21,7 +21,8 @@ class TestCasePrioritisation {
     private String[] bestIndividual;
     private int numberOfFaults = 0;
 
-    TestCasePrioritisation() {
+    TestCasePrioritisation(String dataSet) {
+        FILE_NAME = dataSet;
         testCases = loadFaultMatrix();
         population = generateStartPopulation();
         evolve();
@@ -163,5 +164,10 @@ class TestCasePrioritisation {
         }
         checkBestSoFar(child);
         return child;
+    }
+
+    @Override
+    public void solve() {
+        evolve();
     }
 }

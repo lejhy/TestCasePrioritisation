@@ -1,48 +1,33 @@
 package MOEA;
 
-import org.moeaframework.Executor;
-import org.moeaframework.Instrumenter;
-import org.moeaframework.analysis.collector.Accumulator;
-import org.moeaframework.core.NondominatedPopulation;
 import org.moeaframework.core.Solution;
-import org.moeaframework.core.Variable;
 import org.moeaframework.core.variable.BinaryIntegerVariable;
 import org.moeaframework.core.variable.EncodingUtils;
 import org.moeaframework.problem.AbstractProblem;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class SmallFaultProblem extends AbstractProblem {
+public class TestCaseProblem extends AbstractProblem {
 
-    private static final String FILENAME = "smallfaultmatrix.txt";
-    private static final int NUMBER_OF_FAULTS = 9;
-    private List<boolean[]> tests = new ArrayList();
+    private final String FILE_NAME;
+    private final int NUMBER_OF_FAULTS;
+    private List<boolean[]> tests = new ArrayList<>();
 
     public static void main(String[] args) {
 
-        NondominatedPopulation result = new Executor()
-                .withProblemClass(SmallFaultProblem.class)
-                .withAlgorithm("NSGAII")
-                .withMaxEvaluations(10000)
-                .run();
 
-        for (Solution solution: result) {
-            System.out.format("Fitness: %f\n", solution.getObjective(0));
-            for (int i = 0; i < solution.getNumberOfVariables(); i++){
-                System.out.format("Variable %d: %s\n", i, solution.getVariable(i));
-            }
-        }
     }
 
-    public SmallFaultProblem() {
-        super(NUMBER_OF_FAULTS, 1, 1);
+    public TestCaseProblem(String dataSet, int numberOfFaults) {
+        super(numberOfFaults, 1, 1);
+        NUMBER_OF_FAULTS = numberOfFaults;
+        FILE_NAME = dataSet;
         try {
-            BufferedReader reader = new BufferedReader(new FileReader(getClass().getClassLoader().getResource(FILENAME).getFile()));
+            BufferedReader reader = new BufferedReader(new FileReader(Objects.requireNonNull(getClass().getClassLoader().getResource(FILE_NAME)).getFile()));
             for(String line = reader.readLine(); line != null; line = reader.readLine()) {
                 String[] tokens = line.split(",");
                 if ((tokens.length - 1) != NUMBER_OF_FAULTS) throw new RuntimeException("Wrong number of faults");
@@ -54,7 +39,7 @@ public class SmallFaultProblem extends AbstractProblem {
             }
         } catch (IOException e) {
             e.printStackTrace();
-            throw new RuntimeException("Failed to read file: " + FILENAME);
+            throw new RuntimeException("Failed to read file: " + FILE_NAME);
         }
     }
 
@@ -91,8 +76,7 @@ public class SmallFaultProblem extends AbstractProblem {
         }
 
         int constraint = 0;
-        List<Integer> orderedTests = Arrays.stream(testOrder).boxed().collect(Collectors.toList());
-        orderedTests.sort(Comparator.comparingInt(o -> o));
+        List<Integer> orderedTests = Arrays.stream(testOrder).boxed().sorted(Comparator.comparingInt(o -> o)).collect(Collectors.toList());
         int lastTest = -1;
         for(int test: orderedTests) {
             constraint += lastTest == test ? 1 : 0;
