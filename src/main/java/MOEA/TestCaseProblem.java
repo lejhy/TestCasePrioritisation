@@ -15,11 +15,13 @@ public class TestCaseProblem extends AbstractProblem {
 
     private final String FILE_NAME;
     private final int NUMBER_OF_FAULTS;
+    private final int NUMBER_OF_TESTS;
     private List<boolean[]> tests = new ArrayList<>();
 
-    public TestCaseProblem(String dataSet, int numberOfFaults) {
-        super(numberOfFaults, 1, 1);
+    public TestCaseProblem(String dataSet, int numberOfFaults, int numberOfTests) {
+        super(numberOfTests, 1, 1);
         NUMBER_OF_FAULTS = numberOfFaults;
+        NUMBER_OF_TESTS = numberOfTests;
         FILE_NAME = dataSet;
         try {
             BufferedReader reader = new BufferedReader(new FileReader(Objects.requireNonNull(getClass().getClassLoader().getResource(FILE_NAME)).getFile()));
@@ -55,20 +57,25 @@ public class TestCaseProblem extends AbstractProblem {
     public void evaluate(Solution solution) {
         int[] testOrder = EncodingUtils.getInt(solution);
 
-        int fitness = 0;
+        double TFSum = 0;
 
         boolean[] detectedFaults = new boolean[NUMBER_OF_FAULTS];
         int totalDetectedFaults = 0;
         for(int testIndex: testOrder) {
             boolean[] test = tests.get(testIndex);
             for(int i = 0; i < NUMBER_OF_FAULTS; i++) {
-                if (test[i] && !detectedFaults[i]) {
-                    detectedFaults[i] = true;
-                    totalDetectedFaults++;
+                if (!detectedFaults[i]) {
+                    TFSum++;
+                    if (test[i]) {
+                        detectedFaults[i] = true;
+                        totalDetectedFaults++;
+                    }
                 }
             }
-            fitness += totalDetectedFaults;
         }
+
+        double APFD = 1.0 - (TFSum / (NUMBER_OF_TESTS * NUMBER_OF_FAULTS)) + (1.0 / (2 * NUMBER_OF_TESTS));
+        double fitness = APFD;
 
         int constraint = 0;
         List<Integer> orderedTests = Arrays.stream(testOrder).boxed().sorted(Comparator.comparingInt(o -> o)).collect(Collectors.toList());

@@ -12,14 +12,17 @@ public class Main {
             int selection = scanner.nextInt();
             String dataSet;
             int numberOfFaults;
+            int numberOfTests;
             switch (selection) {
                 case 1:
                     dataSet = "smallfaultmatrix.txt";
                     numberOfFaults = 9;
+                    numberOfTests = 5;
                     break;
                 case 2:
                     dataSet = "bigfaultmatrix.txt";
                     numberOfFaults = 38;
+                    numberOfTests = 10;
                     break;
                 default:
                     return;
@@ -40,7 +43,7 @@ public class Main {
 //
 //                    break;
                 case 3:
-                    solver = new MOEASolver(dataSet, numberOfFaults, "NSGAII");
+                    solver = new MOEASolver(dataSet, numberOfFaults, numberOfTests, "NSGAII");
                     break;
                 default:
                     return;
