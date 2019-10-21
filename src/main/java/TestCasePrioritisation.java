@@ -50,37 +50,22 @@ class TestCasePrioritisation implements Solver {
                 .forEach(v -> {
                     matingPool.add(v.getKey());
                 });
-        if (bestCandidate != null) {
-            matingPool.add(0, bestCandidate); // best individual always mates
-        }
         return matingPool;
-    }
-
-
-    private void checkBestSoFar(String[] candidate) {
-        double score = TestCaseOrderEvaluator.fitnessFunction(testCases, candidate);
-        if (bestScore < score) {
-            bestScore = score;
-            bestCandidate = candidate;
-            System.out.println("Generation: " + generationCount + " New best: " + score + Arrays.toString(candidate));
-            for (String s : bestCandidate) {
-                for (boolean b : testCases.get(s)) {
-                    if (b) System.out.print("1 ");
-                    else System.out.print("0 ");
-                }
-                System.out.println();
-            }
-        }
     }
 
     private Set<String[]> generateNewPopulation(List<String[]> matingPool) {
         Set<String[]> newPopulation = new HashSet<>();
+        //Elitism
+        if (bestCandidate != null) {
+            newPopulation.add(bestCandidate); // best individual goes into new population unchanged
+        }
+        //Mating
         while (newPopulation.size() < POPULATION_SIZE) {
             String[] parentA = matingPool.get(rg.nextInt(matingPool.size()));
             String[] parentB = matingPool.get(rg.nextInt(matingPool.size()));
             if (Math.random() < CROSSOVER_RATE) { // There is a chance that the parent will enter the next population without crossover or mutation
-                newPopulation.add(crossover(parentA, parentB));
-                newPopulation.add(crossover(parentB, parentA));
+                newPopulation.add(crossoverAndMutate(parentA, parentB));
+                newPopulation.add(crossoverAndMutate(parentB, parentA));
             } else {
                 newPopulation.add(parentA);
                 newPopulation.add(parentB);
@@ -89,7 +74,7 @@ class TestCasePrioritisation implements Solver {
         return newPopulation;
     }
 
-    private String[] crossover(String[] p1, String[] p2) {
+    private String[] crossoverAndMutate(String[] p1, String[] p2) {
         List<String> availableGenes = new ArrayList<>(testCases.keySet());
         String[] child = new String[SUBSET_SIZE];
         for (int k = 0; k < SUBSET_SIZE; k++) {
@@ -113,4 +98,19 @@ class TestCasePrioritisation implements Solver {
         return child;
     }
 
+    private void checkBestSoFar(String[] candidate) {
+        double score = TestCaseOrderEvaluator.fitnessFunction(testCases, candidate);
+        if (bestScore < score) {
+            bestScore = score;
+            bestCandidate = candidate;
+            System.out.println("Generation: " + generationCount + " New best: " + score + Arrays.toString(candidate));
+            for (String s : bestCandidate) {
+                for (boolean b : testCases.get(s)) {
+                    if (b) System.out.print("1 ");
+                    else System.out.print("0 ");
+                }
+                System.out.println();
+            }
+        }
+    }
 }
