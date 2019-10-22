@@ -23,7 +23,7 @@ public class MOEASolver implements Solver{
         List<NondominatedPopulation> result = new Executor()
                 .withProblem(new TestCaseProblem(FILE_NAME, NUMBER_OF_FAULTS, NUMBER_OF_TESTS))
                 .withAlgorithm(ALGORITHM)
-                .withMaxEvaluations(100000)
+                .withMaxEvaluations(25000)
                 .runSeeds(1);
 
         for (NondominatedPopulation population: result) {
