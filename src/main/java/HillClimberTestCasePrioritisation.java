@@ -2,11 +2,13 @@ import java.util.*;
 
 public class HillClimberTestCasePrioritisation implements Solver {
     private final int SUBSET_SIZE;
-    private final int MAX_GEN = 500;
+    private final int MAX_ITERATION = 10;
+    private final int CANDIDATES = 25;
 
     private Map<String, boolean[]> testCases;
-    private int generationCount = 0;
     private Random rg = new Random();
+    private double currentBestScore = 0;
+    private String[] currentBestCandidate;
     private double bestScore = 0;
     private String[] bestCandidate;
 
@@ -17,29 +19,31 @@ public class HillClimberTestCasePrioritisation implements Solver {
     }
 
     public void solve() {
-        bestCandidate = RandomCandidateGenerator.getRandomCandidate(testCases.keySet(), SUBSET_SIZE);
-        bestScore = TestCaseOrderEvaluator.fitnessFunction(testCases, bestCandidate);
-        while (generationCount < MAX_GEN) {
-            generationCount++;
-            double oldScore = bestScore;
-            Set<String[]> neighbourhood = findAllNeighbours();
-            Map<String[], Double> rankedNeighbourhood = new HashMap<>();
-            neighbourhood.forEach(s -> rankedNeighbourhood.put(s, TestCaseOrderEvaluator.fitnessFunction(testCases, s)));
-            rankedNeighbourhood.forEach((k, v) -> {
-                if (v > bestScore) {
-                    bestScore = v;
-                    bestCandidate = k;
-                }
-            });
-            if (oldScore != bestScore) {
-                System.out.println("Generation: " + generationCount + " New best: " + bestScore + Arrays.toString(bestCandidate));
-                for (String s : bestCandidate) {
-                    for (boolean b : testCases.get(s)) {
-                        if (b) {
-                            System.out.print("1 ");
-                        } else System.out.print("0 ");
+        for (int i = 0; i < CANDIDATES; i++) {
+            currentBestCandidate = RandomCandidateGenerator.getRandomCandidate(testCases.keySet(), SUBSET_SIZE);
+            currentBestScore = TestCaseOrderEvaluator.fitnessFunction(testCases, currentBestCandidate);
+            for (int iterationCount = 0; iterationCount < MAX_ITERATION; iterationCount++) {
+                Set<String[]> neighbourhood = findAllNeighbours();
+                Map<String[], Double> rankedNeighbourhood = new HashMap<>();
+                neighbourhood.forEach(s -> rankedNeighbourhood.put(s, TestCaseOrderEvaluator.fitnessFunction(testCases, s)));
+                rankedNeighbourhood.forEach((k, v) -> {
+                    if (v > currentBestScore) {
+                        currentBestScore = v;
+                        currentBestCandidate = k;
                     }
-                    System.out.println();
+                });
+                if (currentBestScore > bestScore) {
+                    System.out.println("Candidate: " + i + " Iteration: " + iterationCount + " New best: " + currentBestScore + Arrays.toString(currentBestCandidate));
+                    for (String s : currentBestCandidate) {
+                        for (boolean b : testCases.get(s)) {
+                            if (b) {
+                                System.out.print("1 ");
+                            } else System.out.print("0 ");
+                        }
+                        System.out.println();
+                    }
+                    bestScore = currentBestScore;
+                    bestCandidate = currentBestCandidate;
                 }
             }
         }
@@ -50,17 +54,17 @@ public class HillClimberTestCasePrioritisation implements Solver {
         for (int i = 0; i < SUBSET_SIZE; i++) {
             for (String test: testCases.keySet()) {
                 boolean isDuplicate = false;
-                for(String existing: bestCandidate) {
+                for(String existing: currentBestCandidate) {
                     if(existing.equals(test)) isDuplicate = true;
                 }
                 if (!isDuplicate) {
-                    String[] newCandidate = bestCandidate.clone();
+                    String[] newCandidate = currentBestCandidate.clone();
                     newCandidate[i] = test;
                     neighbours.add(newCandidate);
                 }
             }
             if (i < SUBSET_SIZE - 1) {
-                String[] newCandidate = bestCandidate.clone();
+                String[] newCandidate = currentBestCandidate.clone();
                 String temp = newCandidate[i];
                 newCandidate[i] = newCandidate[i + 1];
                 newCandidate[i + 1] = temp;
