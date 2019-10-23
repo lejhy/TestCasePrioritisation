@@ -4,7 +4,7 @@ class TestCasePrioritisation implements Solver {
     private final int POPULATION_SIZE = 500;
     private final int SUBSET_SIZE;
     private final double MUTATION_RATE = 0.15;
-    private final double CROSSOVER_RATE = 0.99;
+    private final double CROSSOVER_RATE = 0.80;
     private final int MAX_GEN = 500;
 
     private Map<String, boolean[]> testCases;

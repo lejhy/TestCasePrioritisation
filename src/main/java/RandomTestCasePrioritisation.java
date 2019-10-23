@@ -19,7 +19,7 @@ public class RandomTestCasePrioritisation implements Solver {
     private void tryRandomSolutions(Map<String, boolean[]> testCases) {
         String[] candidate;
         double score;
-        for (int i = 0; i < 500000; i++) {
+        for (int i = 0; i < 250000; i++) {
             candidate = RandomCandidateGenerator.getRandomCandidate(testCases.keySet(), SUBSET_SIZE);
             score = TestCaseOrderEvaluator.fitnessFunction(testCases, candidate);
             if (score > bestScore) {
